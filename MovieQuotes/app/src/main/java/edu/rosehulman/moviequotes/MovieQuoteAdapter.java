@@ -6,6 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,11 +18,14 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
 
     private List<MovieQuote> mMovieQuotes;
     private Callback mCallback;
+    // Access a Cloud Firestore instance from your Activity
 
+    private FirebaseFirestore db;
 
     public MovieQuoteAdapter(Callback callback) {
         mCallback = callback;
         mMovieQuotes = new ArrayList<>();
+        db = FirebaseFirestore.getInstance();
     }
 
     @Override
@@ -32,8 +37,8 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
     @Override
     public void onBindViewHolder(ViewHolder holder, final int position) {
         final MovieQuote movieQuote = mMovieQuotes.get(position);
-        holder.mQuoteTextView.setText(movieQuote.getQuote());
-        holder.mMovieTextView.setText(movieQuote.getMovie());
+        holder.mQuoteTextView.setText(movieQuote.quote);
+        holder.mMovieTextView.setText(movieQuote.movie);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -52,8 +57,10 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
 
     public void remove(MovieQuote movieQuote) {
         //TODO: Remove the next line(s) and use Firebase instead
-        mMovieQuotes.remove(movieQuote);
-        notifyDataSetChanged();
+//        mMovieQuotes.remove(movieQuote);
+//        notifyDataSetChanged();
+
+        db.collection("quotes").document(movieQuote.key).delete();
     }
 
 
@@ -64,14 +71,19 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
 
     public void add(MovieQuote movieQuote) {
         //TODO: Remove the next line(s) and use Firebase instead
-        mMovieQuotes.add(0, movieQuote);
-        notifyDataSetChanged();
+//        mMovieQuotes.add(0, movieQuote);
+//        notifyDataSetChanged();
+      db.collection("quotes").add(movieQuote);
+
+
+
+
     }
 
     public void update(MovieQuote movieQuote, String newQuote, String newMovie) {
         //TODO: Remove the next line(s) and use Firebase instead
-        movieQuote.setQuote(newQuote);
-        movieQuote.setMovie(newMovie);
+        movieQuote.quote = newQuote;
+        movieQuote.movie = newMovie;
         notifyDataSetChanged();
     }
 

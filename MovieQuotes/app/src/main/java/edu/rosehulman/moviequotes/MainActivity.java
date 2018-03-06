@@ -76,8 +76,8 @@ public class MainActivity extends AppCompatActivity implements MovieQuoteAdapter
         final EditText movieEditText = (EditText) view.findViewById(R.id.dialog_add_movie_text);
         if (movieQuote != null) {
             // pre-populate
-            quoteEditText.setText(movieQuote.getQuote());
-            movieEditText.setText(movieQuote.getMovie());
+            quoteEditText.setText(movieQuote.quote);
+            movieEditText.setText(movieQuote.movie);
 
             TextWatcher textWatcher = new TextWatcher() {
                 @Override
