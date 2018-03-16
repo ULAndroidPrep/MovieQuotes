@@ -1,12 +1,19 @@
 package edu.rosehulman.moviequotes;
 
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,19 +23,71 @@ import java.util.List;
  */
 public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.ViewHolder> {
 
-    private List<MovieQuote> mMovieQuotes;
+  private List<MovieQuote> mMovieQuotes;
     private Callback mCallback;
     // Access a Cloud Firestore instance from your Activity
 
-    private FirebaseFirestore db;
+
+    private CollectionReference mQuotesRef;
 
     public MovieQuoteAdapter(Callback callback) {
         mCallback = callback;
         mMovieQuotes = new ArrayList<>();
-        db = FirebaseFirestore.getInstance();
+        mQuotesRef = FirebaseFirestore.getInstance().collection("quotes");
+        addListener();
+      Log.d(Constants.TAG, "Test log");
     }
 
-    @Override
+  private void addListener() {
+    mQuotesRef
+        .addSnapshotListener(new EventListener<QuerySnapshot>() {
+          @Override
+          public void onEvent(@Nullable QuerySnapshot documentSnapshots,
+                              @Nullable FirebaseFirestoreException e) {
+            if (e != null) {
+              Log.w(Constants.TAG, "listen:error", e);
+              return;
+            }
+
+            for (DocumentChange dc : documentSnapshots.getDocumentChanges()) {
+              Log.d(Constants.TAG, "Loop" + dc.getDocument().getId());
+              switch (dc.getType()) {
+                case ADDED:
+                  Log.d(Constants.TAG, "New movie quote: " + dc.getDocument().getData());
+                  MovieQuote quote = dc.getDocument().toObject(MovieQuote.class);
+                  quote.id = dc.getDocument().getId();
+                  mMovieQuotes.add(quote);
+                  break;
+                case MODIFIED:
+                  Log.d(Constants.TAG, "Modified movie quote: " + dc.getDocument().getData());
+                  for (MovieQuote mq : mMovieQuotes) {
+                    if (mq.id.equals(dc.getDocument().getId())) {
+                      mMovieQuotes.remove(mq);
+                      mMovieQuotes.add(mq);
+                      notifyDataSetChanged();
+                      break;
+                    }
+                  }
+                  break;
+                case REMOVED:
+                  Log.d(Constants.TAG, "Removed movie quote: " + dc.getDocument().getData());
+                  for (MovieQuote mq : mMovieQuotes) {
+                    if (mq.id.equals(dc.getDocument().getId())) {
+                      mMovieQuotes.remove(mq);
+                      notifyDataSetChanged();
+                      break;
+                    }
+                  }
+                  break;
+              }
+            }
+            notifyDataSetChanged();
+
+          }
+        });
+  }
+
+  @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.movie_quote_row_view, parent, false);
         return new ViewHolder(view);
@@ -60,7 +119,9 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
 //        mMovieQuotes.remove(movieQuote);
 //        notifyDataSetChanged();
 
-        db.collection("quotes").document(movieQuote.key).delete();
+      // Needs to do this...
+      Log.d(Constants.TAG, "REmove" + movieQuote.quote);
+      mQuotesRef.document(movieQuote.id).delete();
     }
 
 
@@ -73,18 +134,18 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
         //TODO: Remove the next line(s) and use Firebase instead
 //        mMovieQuotes.add(0, movieQuote);
 //        notifyDataSetChanged();
-      db.collection("quotes").add(movieQuote);
-
-
-
-
+      mQuotesRef.add(movieQuote);
     }
 
     public void update(MovieQuote movieQuote, String newQuote, String newMovie) {
         //TODO: Remove the next line(s) and use Firebase instead
         movieQuote.quote = newQuote;
         movieQuote.movie = newMovie;
-        notifyDataSetChanged();
+//        notifyDataSetChanged();
+
+      mQuotesRef.document(movieQuote.id).set(movieQuote);
+      
+
     }
 
     public interface Callback {

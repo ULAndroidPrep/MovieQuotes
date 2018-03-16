@@ -13,7 +13,7 @@ public class MovieQuote {
     public String movie;
 
     @Exclude
-    public String key;
+    public String id;
 
     @ServerTimestamp
     public Date lastTouched;
