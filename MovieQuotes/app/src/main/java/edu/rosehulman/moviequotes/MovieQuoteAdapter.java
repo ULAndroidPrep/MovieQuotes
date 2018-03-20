@@ -40,7 +40,7 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
     }
 
   private void addListener() {
-    mQuotesRef.orderBy("lastTouched", Query.Direction.DESCENDING)
+    mQuotesRef.orderBy("lastTouched", Query.Direction.DESCENDING).limit(50)
         .addSnapshotListener(new EventListener<QuerySnapshot>() {
           @Override
           public void onEvent(@Nullable QuerySnapshot documentSnapshots,
@@ -50,14 +50,16 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
               return;
             }
 
-            for (DocumentChange dc : documentSnapshots.getDocumentChanges()) {
-              Log.d(Constants.TAG, "Loop" + dc.getDocument().getId());
+            //for (DocumentChange dc : documentSnapshots.getDocumentChanges()) {
+            List<DocumentChange> docChanges = documentSnapshots.getDocumentChanges();
+            for (int i = docChanges.size() - 1; i >= 0; --i) {
+              DocumentChange dc = docChanges.get(i);
               switch (dc.getType()) {
                 case ADDED:
                   Log.d(Constants.TAG, "New movie quote: " + dc.getDocument().getData());
                   MovieQuote quote = dc.getDocument().toObject(MovieQuote.class);
                   quote.id = dc.getDocument().getId();
-                  mMovieQuotes.add(quote);
+                  mMovieQuotes.add(0, quote);
                   break;
                 case MODIFIED:
                   Log.d(Constants.TAG, "Modified movie quote: " + dc.getDocument().getData());
