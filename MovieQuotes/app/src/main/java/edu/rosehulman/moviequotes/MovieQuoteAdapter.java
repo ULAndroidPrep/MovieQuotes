@@ -13,6 +13,7 @@ import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
     }
 
   private void addListener() {
-    mQuotesRef
+    mQuotesRef.orderBy("lastTouched", Query.Direction.DESCENDING)
         .addSnapshotListener(new EventListener<QuerySnapshot>() {
           @Override
           public void onEvent(@Nullable QuerySnapshot documentSnapshots,
@@ -60,10 +61,13 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
                   break;
                 case MODIFIED:
                   Log.d(Constants.TAG, "Modified movie quote: " + dc.getDocument().getData());
+                  MovieQuote modifiedQuote = dc.getDocument().toObject(MovieQuote.class);
                   for (MovieQuote mq : mMovieQuotes) {
-                    if (mq.id.equals(dc.getDocument().getId())) {
-                      mMovieQuotes.remove(mq);
-                      mMovieQuotes.add(mq);
+                    if (mq.id.equals(modifiedQuote.id)) {
+//                      mMovieQuotes.remove(mq);
+//                      mMovieQuotes.add(0, mq);
+                      mq.quote = modifiedQuote.quote;
+                      mq.movie = modifiedQuote.movie;
                       notifyDataSetChanged();
                       break;
                     }
@@ -144,7 +148,7 @@ public class MovieQuoteAdapter extends RecyclerView.Adapter<MovieQuoteAdapter.Vi
 //        notifyDataSetChanged();
 
       mQuotesRef.document(movieQuote.id).set(movieQuote);
-      
+
 
     }
 
